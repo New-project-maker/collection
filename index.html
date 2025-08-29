@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>💰 Cashbook Manager</title>
+  <title>💰 Collection</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f0f2f5;
-      color: #333;
+      background: #f4f4f4;
       padding: 20px;
       text-align: center;
     }
@@ -20,96 +19,102 @@
       border-radius: 5px;
       border: 1px solid #ccc;
     }
-    button {
-      background-color: #28a745;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #218838;
-    }
     table {
-      margin: 20px auto;
+      width: 100%;
       border-collapse: collapse;
-      width: 80%;
+      margin-top: 20px;
       background: white;
-      box-shadow: 0px 0px 5px rgba(0,0,0,0.1);
     }
     th, td {
+      padding: 10px;
       border: 1px solid #ddd;
-      padding: 8px;
       text-align: center;
+      font-weight: bold;
     }
     th {
-      background-color: #007bff;
+      background: #333;
       color: white;
     }
+    .collection { background: #e6b800; }
+    .expenses { background: #cc6666; }
+    .balance { background: #66b266; } 
+    .total { background: #e6b84c; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>💰 Cashbook Manager</h1>
+
+  <h1>💰 Collection</h1>
 
   <input type="date" id="date">
   <input type="number" id="collection" placeholder="Collection">
   <input type="number" id="expenses" placeholder="Expenses">
-  <button onclick="addData()">➕ Add</button>
+  <button onclick="addEntry()">Add Entry</button>
 
-  <table>
+  <table id="cashTable">
     <thead>
       <tr>
         <th>Date</th>
-        <th>Collection</th>
-        <th>Expenses</th>
-        <th>Balance</th>
-        <th>Total Cash</th>
+        <th class="collection">Collection</th>
+        <th class="expenses">Expenses</th>
+        <th class="balance">Balance</th>
+        <th class="total">Total Cash</th>
       </tr>
     </thead>
-    <tbody id="dataTable"></tbody>
+    <tbody>
+    </tbody>
   </table>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw3nPyuFPEIgO4LaoEy-9K6lVJCEy0Ki4aSM6Awr2kqUMoYNfo11De3uz1MTuW4Hg9MZg/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbw3nPyuFPEIgO4LaoEy-9K6lVJCEy0Ki4aSM6Awr2kqUMoYNfo11De3uz1MTuW4Hg9MZg/exec";
 
-    function addData() {
-      const data = {
-        date: document.getElementById("date").value,
-        collection: parseFloat(document.getElementById("collection").value) || 0,
-        expenses: parseFloat(document.getElementById("expenses").value) || 0
-      };
+    // নতুন এন্ট্রি Google Sheet এ পাঠাবে
+    async function addEntry() {
+      const date = document.getElementById("date").value;
+      const collection = parseFloat(document.getElementById("collection").value) || 0;
+      const expenses = parseFloat(document.getElementById("expenses").value) || 0;
 
-      fetch(SCRIPT_URL, {
+      if (!date) {
+        alert("Please select a date!");
+        return;
+      }
+
+      const data = { date, collection, expenses };
+
+      // POST করে Google Sheet এ পাঠানো
+      await fetch(API_URL, {
         method: "POST",
-        body: JSON.stringify(data)
-      }).then(res => res.text())
-        .then(() => {
-          alert("✅ Data Saved!");
-          loadData(); // save এর পর ডেটা আবার লোড হবে
-          document.getElementById("date").value = "";
-          document.getElementById("collection").value = "";
-          document.getElementById("expenses").value = "";
-        });
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" }
+      });
+
+      // টেবিল আপডেট
+      loadData();
+
+      // ইনপুট ক্লিয়ার
+      document.getElementById("date").value = "";
+      document.getElementById("collection").value = "";
+      document.getElementById("expenses").value = "";
     }
 
-    function loadData() {
-      fetch(SCRIPT_URL)
-        .then(res => res.json())
-        .then(data => {
-          let table = document.getElementById("dataTable");
-          table.innerHTML = "";
-          data.forEach((row, index) => {
-            if(index === 0) return; // হেডার বাদ
-            let tr = document.createElement("tr");
-            row.forEach(cell => {
-              let td = document.createElement("td");
-              td.innerText = cell;
-              tr.appendChild(td);
-            });
-            table.appendChild(tr);
-          });
+    // Google Sheet থেকে ডাটা লোড করবে
+    async function loadData() {
+      const res = await fetch(API_URL);
+      const rows = await res.json();
+
+      const tableBody = document.getElementById("cashTable").getElementsByTagName("tbody")[0];
+      tableBody.innerHTML = "";
+
+      rows.slice(1).forEach(row => {   // 0 তে হেডার থাকে
+        const newRow = tableBody.insertRow();
+        row.forEach(cell => {
+          newRow.insertCell().innerText = cell;
         });
+      });
     }
 
+    // প্রথমে ডাটা লোড হবে
     window.onload = loadData;
   </script>
+
 </body>
 </html>
