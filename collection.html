@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>💰 Collection</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: center;
+      font-weight: bold;
+    }
+    th {
+      background: #333;
+      color: white;
+    }
+    .collection { background: #e6b800; }
+    .expenses { background: #cc6666; }
+    .balance { background: #66b266; } 
+    .total { background: #e6b84c; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h1>💰 Collection</h1>
+
+  <input type="date" id="date">
+  <input type="number" id="collection" placeholder="Collection">
+  <input type="number" id="expenses" placeholder="Expenses">
+  <button onclick="addEntry()">Add Entry</button>
+
+  <table id="cashTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th class="collection">Collection</th>
+        <th class="expenses">Expenses</th>
+        <th class="balance">Balance</th>
+        <th class="total">Total Cash</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+
+  <script>
+    let totalCash = 0;
+
+    function addEntry() {
+      const date = document.getElementById("date").value;
+      const collection = parseFloat(document.getElementById("collection").value) || 0;
+      const expenses = parseFloat(document.getElementById("expenses").value) || 0;
+      const balance = collection - expenses;
+      totalCash += balance;
+
+      const table = document.getElementById("cashTable").getElementsByTagName("tbody")[0];
+      const newRow = table.insertRow();
+
+      newRow.insertCell(0).innerText = date;
+      newRow.insertCell(1).innerText = collection;
+      newRow.insertCell(2).innerText = expenses;
+      newRow.insertCell(3).innerText = balance;
+      newRow.insertCell(4).innerText = totalCash;
+
+      document.getElementById("date").value = "";
+      document.getElementById("collection").value = "";
+      document.getElementById("expenses").value = "";
+    }
+  </script>
+
+</body>
+</html>
