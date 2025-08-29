@@ -64,13 +64,14 @@
   <script>
     const scriptURL = "https://script.google.com/macros/s/AKfycbxm18-rFd4MouQQRuQZbyjjP2k6Zy-DO-LWHlNbt4LzbwaqJRsLH-ACR57ZHUV7gGTnoQ/exec";
 
+    // নতুন ডেটা Add করা
     async function addEntry() {
       const date = document.getElementById("date").value;
-      const collection = document.getElementById("collection").value;
-      const expenses = document.getElementById("expenses").value;
+      const collection = parseFloat(document.getElementById("collection").value) || 0;
+      const expenses = parseFloat(document.getElementById("expenses").value) || 0;
 
-      if (!date || !collection || !expenses) {
-        alert("Please fill all fields!");
+      if (!date) {
+        alert("Please enter a date!");
         return;
       }
 
@@ -81,11 +82,52 @@
 
       try {
         await fetch(scriptURL, { method: "POST", body: formData });
-        alert("Data added successfully!");
+        alert("✅ Data added successfully!");
+        loadData(); // সাথে সাথেই রিফ্রেশ করে দেখাবে
       } catch (error) {
-        alert("Error: " + error.message);
+        alert("❌ Error: " + error.message);
       }
     }
+
+    // Google Sheet থেকে ডেটা Load করা
+    async function loadData() {
+      try {
+        const res = await fetch(scriptURL);
+        const data = await res.json();
+
+        const table = document.getElementById("dataTable");
+        table.innerHTML = `
+          <tr>
+            <th>Date</th>
+            <th>Collection</th>
+            <th>Expenses</th>
+            <th>Balance</th>
+            <th>Total Cash</th>
+          </tr>
+        `;
+
+        let totalCash = 0;
+        data.forEach(row => {
+          const balance = row.collection - row.expenses;
+          totalCash += balance;
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${row.date}</td>
+            <td>${row.collection}</td>
+            <td>${row.expenses}</td>
+            <td>${balance}</td>
+            <td>${totalCash}</td>
+          `;
+          table.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Error loading data:", err);
+      }
+    }
+
+    // পেজ লোড হলে ডেটা নিয়ে আসবে
+    window.onload = loadData;
   </script>
 </body>
 </html>
