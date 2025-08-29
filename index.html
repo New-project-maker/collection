@@ -2,36 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>💰 Cashbook Manager</title>
+  <title>💰 Collection</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f4f4f9;
+      background: #f2f2f7;
       text-align: center;
       padding: 20px;
     }
-    h1 {
-      color: #222;
-    }
+    h1 { color: black; }
     table {
-      width: 100%;
+      margin: 20px auto;
       border-collapse: collapse;
-      margin-top: 20px;
+      width: 90%;
     }
     th, td {
       border: 1px solid #ccc;
       padding: 10px;
       text-align: center;
+      font-weight: bold;
     }
-    th {
-      background: #333;
-      color: #fff;
-    }
-    .col-collection { background: #f1c40f; }
-    .col-expenses   { background: #e74c3c; color: #fff; }
-    .col-balance    { background: #2ecc71; color: #fff; }
-    .col-total      { background: #f39c12; color: #fff; }
+    th { background: #333; color: white; }
+    .yellow { background: #f1c40f; }
+    .red    { background: #e74c3c; color: white; }
+    .green  { background: #2ecc71; color: white; }
+    .orange { background: #f39c12; }
   </style>
 </head>
 <body>
@@ -42,88 +37,61 @@
   <input type="number" id="expenses" placeholder="Expenses">
   <button onclick="addEntry()">Add Entry</button>
 
-  <table id="cashTable">
+  <table>
     <thead>
       <tr>
         <th>Date</th>
-        <th class="col-collection">Collection</th>
-        <th class="col-expenses">Expenses</th>
-        <th class="col-balance">Balance</th>
-        <th class="col-total">Total Cash</th>
+        <th class="yellow">Collection</th>
+        <th class="red">Expenses</th>
+        <th class="green">Balance</th>
+        <th class="orange">Total Cash</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="dataBody"></tbody>
   </table>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw3nPyuFPEIgO4LaoEy-9K6lVJCEy0Ki4aSM6Awr2kqUMoYNfo11De3uz1MTuW4Hg9MZg/exec";
-    let totalCash = 0;
+    // 👉 এখানে তোমার Google Script URL বসাও
+    const scriptURL = "https://script.google.com/macros/s/AKfycbw3nPyuFPEIgO4LaoEy-9K6lVJCEy0Ki4aSM6Awr2kqUMoYNfo11De3uz1MTuW4Hg9MZg/exec";
 
-    // ✅ Add Entry & Save to Sheet
     async function addEntry() {
       const dateInput = document.getElementById("date").value;
-      const collection = parseFloat(document.getElementById("collection").value) || 0;
-      const expenses = parseFloat(document.getElementById("expenses").value) || 0;
-
-      if (!dateInput) {
-        alert("Please select a date");
-        return;
-      }
-
-      // Format Date → DD/MM/YYYY
+      if (!dateInput) { alert("Please select a date"); return; }
       const parts = dateInput.split("-");
       const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
-      const balance = collection - expenses;
-      totalCash += balance;
+      const data = {
+        date: formattedDate,
+        collection: document.getElementById("collection").value,
+        expenses: document.getElementById("expenses").value
+      };
 
-      const data = { date: formattedDate, collection, expenses };
-
-      await fetch(SCRIPT_URL, {
+      await fetch(scriptURL, {
         method: "POST",
         body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" }
       });
 
-      addRow(formattedDate, collection, expenses, balance, totalCash);
-
-      // Reset Inputs
-      document.getElementById("date").value = "";
-      document.getElementById("collection").value = "";
-      document.getElementById("expenses").value = "";
+      loadData();
     }
 
-    // ✅ Add Row to Table
-    function addRow(date, collection, expenses, balance, totalCash) {
-      const table = document.getElementById("cashTable").getElementsByTagName("tbody")[0];
-      const newRow = table.insertRow();
-      newRow.insertCell(0).innerText = date;
-      newRow.insertCell(1).innerText = collection;
-      newRow.insertCell(2).innerText = expenses;
-      newRow.insertCell(3).innerText = balance;
-      newRow.insertCell(4).innerText = totalCash;
-    }
-
-    // ✅ Load Data from Google Sheet on Page Load
     async function loadData() {
-      const res = await fetch(SCRIPT_URL);
+      const res = await fetch(scriptURL);
       const rows = await res.json();
-      const tableBody = document.getElementById("cashTable").getElementsByTagName("tbody")[0];
-      tableBody.innerHTML = ""; // Clear old data
-      totalCash = 0;
-
-      rows.forEach(row => {
-        const date = row.date;
-        const collection = parseFloat(row.collection) || 0;
-        const expenses = parseFloat(row.expenses) || 0;
-        const balance = collection - expenses;
-        totalCash += balance;
-        addRow(date, collection, expenses, balance, totalCash);
+      const body = document.getElementById("dataBody");
+      body.innerHTML = "";
+      rows.slice(1).forEach(r => {
+        const tr = document.createElement("tr");
+        r.forEach(val => {
+          const td = document.createElement("td");
+          td.textContent = val;
+          tr.appendChild(td);
+        });
+        body.appendChild(tr);
       });
     }
 
-    // Load data when page opens
-    window.onload = loadData;
+    loadData();
   </script>
 </body>
 </html>
