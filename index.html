@@ -65,55 +65,50 @@
   </table>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbw3nPyuFPEIgO4LaoEy-9K6lVJCEy0Ki4aSM6Awr2kqUMoYNfo11De3uz1MTuW4Hg9MZg/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw3nPyuFPEIgO4LaoEy-9K6lVJCEy0Ki4aSM6Awr2kqUMoYNfo11De3uz1MTuW4Hg9MZg/exec";
+    let totalCash = 0;
 
-    // নতুন এন্ট্রি Google Sheet এ পাঠাবে
     async function addEntry() {
-      const date = document.getElementById("date").value;
+      const dateInput = document.getElementById("date").value;
       const collection = parseFloat(document.getElementById("collection").value) || 0;
       const expenses = parseFloat(document.getElementById("expenses").value) || 0;
 
-      if (!date) {
-        alert("Please select a date!");
+      if (!dateInput) {
+        alert("Please select a date");
         return;
       }
 
-      const data = { date, collection, expenses };
+      // Format Date DD/MM/YYYY
+      const date = new Date(dateInput);
+      const formattedDate = `${date.getDate().toString().padStart(2, "0")}/${
+        (date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
 
-      // POST করে Google Sheet এ পাঠানো
-      await fetch(API_URL, {
+      const balance = collection - expenses;
+      totalCash += balance;
+
+      const data = { date: formattedDate, collection, expenses };
+
+      // Send to Google Sheet
+      await fetch(SCRIPT_URL, {
         method: "POST",
         body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
       });
 
-      // টেবিল আপডেট
-      loadData();
+      // Update Table
+      const table = document.getElementById("cashTable").getElementsByTagName("tbody")[0];
+      const newRow = table.insertRow();
 
-      // ইনপুট ক্লিয়ার
+      newRow.insertCell(0).innerText = formattedDate;
+      newRow.insertCell(1).innerText = collection;
+      newRow.insertCell(2).innerText = expenses;
+      newRow.insertCell(3).innerText = balance;
+      newRow.insertCell(4).innerText = totalCash;
+
       document.getElementById("date").value = "";
       document.getElementById("collection").value = "";
       document.getElementById("expenses").value = "";
     }
-
-    // Google Sheet থেকে ডাটা লোড করবে
-    async function loadData() {
-      const res = await fetch(API_URL);
-      const rows = await res.json();
-
-      const tableBody = document.getElementById("cashTable").getElementsByTagName("tbody")[0];
-      tableBody.innerHTML = "";
-
-      rows.slice(1).forEach(row => {   // 0 তে হেডার থাকে
-        const newRow = tableBody.insertRow();
-        row.forEach(cell => {
-          newRow.insertCell().innerText = cell;
-        });
-      });
-    }
-
-    // প্রথমে ডাটা লোড হবে
-    window.onload = loadData;
   </script>
 
 </body>
