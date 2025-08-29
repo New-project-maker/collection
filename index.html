@@ -2,54 +2,59 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>💰 Collection</title>
+  <title>💰 Cashbook Manager</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f4f4f4;
+      background-color: #f0f2f5;
+      color: #333;
       padding: 20px;
       text-align: center;
     }
-    h1 { margin-bottom: 20px; }
+    h1 {
+      margin-bottom: 20px;
+    }
     input, button {
       padding: 8px;
       margin: 5px;
       border-radius: 5px;
       border: 1px solid #ccc;
     }
+    button {
+      background-color: #28a745;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
     table {
-      width: 100%;
+      margin: 20px auto;
       border-collapse: collapse;
-      margin-top: 20px;
+      width: 80%;
       background: white;
+      box-shadow: 0px 0px 5px rgba(0,0,0,0.1);
     }
     th, td {
-      padding: 10px;
       border: 1px solid #ddd;
+      padding: 8px;
       text-align: center;
-      font-weight: bold;
     }
-    th { color: white; }
-    th:nth-child(1) { background: #333; }
-    th:nth-child(2) { background: #e6b800; }
-    th:nth-child(3) { background: #cc6666; }
-    th:nth-child(4) { background: #66b266; }
-    th:nth-child(5) { background: #e6b84c; }
-    #msg { margin-top: 15px; font-weight: bold; }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
   </style>
 </head>
 <body>
-
-  <h1>💰 Collection</h1>
+  <h1>💰 Cashbook Manager</h1>
 
   <input type="date" id="date">
   <input type="number" id="collection" placeholder="Collection">
   <input type="number" id="expenses" placeholder="Expenses">
-  <button onclick="addEntry()">Add Entry</button>
+  <button onclick="addData()">➕ Add</button>
 
-  <p id="msg"></p>
-
-  <table id="cashTable">
+  <table>
     <thead>
       <tr>
         <th>Date</th>
@@ -59,48 +64,52 @@
         <th>Total Cash</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="dataTable"></tbody>
   </table>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxBI94tcqIVR7L0JagVWvaBqEcSZFvJUTDOT2RsTfuLuH5o5aDZl4rQJr-NwJW0W-J15A/exec";
-    let totalCash = 0;
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw3nPyuFPEIgO4LaoEy-9K6lVJCEy0Ki4aSM6Awr2kqUMoYNfo11De3uz1MTuW4Hg9MZg/exec";
 
-    function addEntry() {
-      const date = document.getElementById("date").value;
-      const collection = parseFloat(document.getElementById("collection").value) || 0;
-      const expenses = parseFloat(document.getElementById("expenses").value) || 0;
-      const balance = collection - expenses;
-      totalCash += balance;
+    function addData() {
+      const data = {
+        date: document.getElementById("date").value,
+        collection: parseFloat(document.getElementById("collection").value) || 0,
+        expenses: parseFloat(document.getElementById("expenses").value) || 0
+      };
 
-      // 👉 Send data to Google Sheet
       fetch(SCRIPT_URL, {
         method: "POST",
-        body: JSON.stringify({ date, collection, expenses })
-      })
-      .then(res => res.text())
-      .then(txt => {
-        document.getElementById("msg").innerText = "✅ Entry saved to Google Sheet!";
-      })
-      .catch(err => {
-        document.getElementById("msg").innerText = "❌ Error: " + err;
-      });
-
-      // 👉 Add to Table (browser view)
-      const table = document.getElementById("cashTable").getElementsByTagName("tbody")[0];
-      const newRow = table.insertRow();
-      newRow.insertCell(0).innerText = date;
-      newRow.insertCell(1).innerText = collection;
-      newRow.insertCell(2).innerText = expenses;
-      newRow.insertCell(3).innerText = balance;
-      newRow.insertCell(4).innerText = totalCash;
-
-      // Clear input
-      document.getElementById("date").value = "";
-      document.getElementById("collection").value = "";
-      document.getElementById("expenses").value = "";
+        body: JSON.stringify(data)
+      }).then(res => res.text())
+        .then(() => {
+          alert("✅ Data Saved!");
+          loadData(); // save এর পর ডেটা আবার লোড হবে
+          document.getElementById("date").value = "";
+          document.getElementById("collection").value = "";
+          document.getElementById("expenses").value = "";
+        });
     }
-  </script>
 
+    function loadData() {
+      fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(data => {
+          let table = document.getElementById("dataTable");
+          table.innerHTML = "";
+          data.forEach((row, index) => {
+            if(index === 0) return; // হেডার বাদ
+            let tr = document.createElement("tr");
+            row.forEach(cell => {
+              let td = document.createElement("td");
+              td.innerText = cell;
+              tr.appendChild(td);
+            });
+            table.appendChild(tr);
+          });
+        });
+    }
+
+    window.onload = loadData;
+  </script>
 </body>
 </html>
